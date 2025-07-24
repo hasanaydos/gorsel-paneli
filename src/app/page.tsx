@@ -95,14 +95,15 @@ export default function Home() {
           text: 'Görseli seninle paylaşıyorum!',
         })
       } catch (e) {
+        alert('Paylaşım başarısız oldu, bağlantı panoya kopyalanıyor.')
         navigator.clipboard.writeText(url)
-        alert('Bağlantı panoya kopyalandı!')
       }
     } else if (navigator.share) {
+      alert('Cihazınızda dosya paylaşımı desteklenmiyor, bağlantı paylaşılacak.')
       navigator.share({ url })
     } else {
+      alert('Cihazınızda paylaşım desteklenmiyor, bağlantı panoya kopyalandı.')
       navigator.clipboard.writeText(url)
-      alert('Bağlantı panoya kopyalandı!')
     }
   }
 
