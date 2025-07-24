@@ -79,8 +79,26 @@ export default function Home() {
   }
 
   // Paylaş fonksiyonu (Web Share API)
-  const paylas = (url: string) => {
-    if (navigator.share) {
+  const paylas = async (url: string, dosyaAdi: string) => {
+    // Web Share API Level 2 ile dosya paylaşımı destekleniyorsa
+    if (
+      navigator.canShare &&
+      navigator.canShare({ files: [new File([], dosyaAdi)] })
+    ) {
+      try {
+        const response = await fetch(url)
+        const blob = await response.blob()
+        const file = new File([blob], dosyaAdi, { type: blob.type })
+        await navigator.share({
+          files: [file],
+          title: dosyaAdi,
+          text: 'Görseli seninle paylaşıyorum!',
+        })
+      } catch (e) {
+        navigator.clipboard.writeText(url)
+        alert('Bağlantı panoya kopyalandı!')
+      }
+    } else if (navigator.share) {
       navigator.share({ url })
     } else {
       navigator.clipboard.writeText(url)
@@ -128,7 +146,7 @@ export default function Home() {
             <div className="text-xs text-gray-600 mb-1">{v.dil} | {v.para} | {v.slogan}</div>
             <div className="flex gap-2">
               <button onClick={() => indir(v.url)} className="text-blue-600 text-sm border px-2 py-1 rounded hover:bg-blue-50">İndir</button>
-              <button onClick={() => paylas(v.url)} className="text-green-600 text-sm border px-2 py-1 rounded hover:bg-green-50">Paylaş</button>
+              <button onClick={() => paylas(v.url, (v.slogan || 'gorsel') + '.jpg')} className="text-green-600 text-sm border px-2 py-1 rounded hover:bg-green-50">Paylaş</button>
             </div>
           </div>
         ))}
