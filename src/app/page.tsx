@@ -32,12 +32,29 @@ function Toast({ message, onClose }: { message: string, onClose: () => void }) {
   );
 }
 
+// Basit Modal bileşeni
+function ShareModal({ open, onClose, onDownload, onShare }: { open: boolean, onClose: () => void, onDownload: () => void, onShare: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 min-w-[250px] flex flex-col gap-4">
+        <h2 className="text-lg font-semibold mb-2">Görseli ne yapmak istersiniz?</h2>
+        <button onClick={() => { onDownload(); onClose(); }} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Görseli indir</button>
+        <button onClick={() => { onShare(); onClose(); }} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Görseli paylaş</button>
+        <button onClick={onClose} className="text-gray-500 mt-2">Vazgeç</button>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [varyasyonlar, setVaryasyonlar] = useState<Varyasyon[]>([])
   const [faaliyetler, setFaaliyetler] = useState<Faaliyet[]>([])
   const [aktifTab, setAktifTab] = useState<'faaliyet' | 'dil' | 'para' | 'slogan'>('faaliyet')
   const [aktifFiltre, setAktifFiltre] = useState<string>('')
   const [toast, setToast] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalImage, setModalImage] = useState<{ url: string, dosyaAdi: string } | null>(null)
 
   const showToast = (msg: string) => setToast(msg)
 
@@ -145,7 +162,6 @@ export default function Home() {
             <div className="text-xs text-gray-600 mb-1">{v.dil} | {v.para} | {v.slogan}</div>
             <div className="flex gap-2">
               <button onClick={() => downloadImage(v.url, (v.slogan || 'gorsel') + '.jpg')} className="text-blue-600 text-sm border px-2 py-1 rounded hover:bg-blue-50">İndir</button>
-              <button onClick={() => shareImage(v.url, (v.slogan || 'gorsel') + '.jpg')} className="text-green-600 text-sm border px-2 py-1 rounded hover:bg-green-50">Paylaş</button>
             </div>
           </div>
         ))}
@@ -154,6 +170,12 @@ export default function Home() {
         )}
       </div>
       <Toast message={toast} onClose={() => setToast('')} />
+      <ShareModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onDownload={() => modalImage && downloadImage(modalImage.url, modalImage.dosyaAdi)}
+        onShare={() => modalImage && shareImage(modalImage.url, modalImage.dosyaAdi)}
+      />
     </main>
   )
 }
