@@ -21,11 +21,46 @@ interface Varyasyon {
   storagePath: string
 }
 
+// Basit Toast bileşeni
+function Toast({ message, onClose }: { message: string, onClose: () => void }) {
+  if (!message) return null;
+  setTimeout(onClose, 2500);
+  return (
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded shadow z-50">
+      {message}
+    </div>
+  );
+}
+
 export default function Home() {
   const [varyasyonlar, setVaryasyonlar] = useState<Varyasyon[]>([])
   const [faaliyetler, setFaaliyetler] = useState<Faaliyet[]>([])
   const [aktifTab, setAktifTab] = useState<'faaliyet' | 'dil' | 'para' | 'slogan'>('faaliyet')
   const [aktifFiltre, setAktifFiltre] = useState<string>('')
+  const [toast, setToast] = useState('')
+
+  const showToast = (msg: string) => setToast(msg)
+
+  const downloadImage = (url: string, dosyaAdi: string) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dosyaAdi;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('İndirme başladı!');
+  };
+
+  const shareImage = async (url: string, dosyaAdi: string) => {
+    if (navigator.share) {
+      await navigator.share({ url });
+      showToast('Bağlantı paylaşıldı!');
+    } else {
+      const whatsappText = encodeURIComponent('Hayırlı Bayramlar');
+      window.open(`https://wa.me/?text=${whatsappText}`, '_blank');
+      showToast('WhatsApp ile paylaşım başlatıldı!');
+    }
+  };
 
   useEffect(() => {
     const fetchVaryasyonlar = async () => {
@@ -78,43 +113,6 @@ export default function Home() {
     }
   }
 
-  // Paylaş fonksiyonu (Web Share API)
-  const paylas = async (url: string, dosyaAdi: string) => {
-    // Web Share API Level 2 ile dosya paylaşımı destekleniyorsa
-    if (
-      navigator.canShare &&
-      navigator.canShare({ files: [new File([], dosyaAdi)] })
-    ) {
-      try {
-        const response = await fetch(url)
-        const blob = await response.blob()
-        const file = new File([blob], dosyaAdi, { type: blob.type })
-        await navigator.share({
-          files: [file],
-          title: dosyaAdi,
-          text: 'Görseli seninle paylaşıyorum!',
-        })
-      } catch (e) {
-        alert('Paylaşım başarısız oldu, bağlantı panoya kopyalanıyor.')
-        navigator.clipboard.writeText(url)
-      }
-    } else if (navigator.share) {
-      alert('Cihazınızda dosya paylaşımı desteklenmiyor, bağlantı paylaşılacak.')
-      navigator.share({ url })
-    } else {
-      alert('Cihazınızda paylaşım desteklenmiyor, bağlantı panoya kopyalandı.')
-      navigator.clipboard.writeText(url)
-    }
-  }
-
-  // İndir fonksiyonu
-  const indir = (url: string) => {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = ''
-    a.click()
-  }
-
   return (
     <main className="p-6 max-w-4xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold text-blue-600">Görsel Galerisi</h1>
@@ -146,8 +144,8 @@ export default function Home() {
             <img src={v.url} alt={v.slogan} className="w-full h-auto rounded mb-2" />
             <div className="text-xs text-gray-600 mb-1">{v.dil} | {v.para} | {v.slogan}</div>
             <div className="flex gap-2">
-              <button onClick={() => indir(v.url)} className="text-blue-600 text-sm border px-2 py-1 rounded hover:bg-blue-50">İndir</button>
-              <button onClick={() => paylas(v.url, (v.slogan || 'gorsel') + '.jpg')} className="text-green-600 text-sm border px-2 py-1 rounded hover:bg-green-50">Paylaş</button>
+              <button onClick={() => downloadImage(v.url, (v.slogan || 'gorsel') + '.jpg')} className="text-blue-600 text-sm border px-2 py-1 rounded hover:bg-blue-50">İndir</button>
+              <button onClick={() => shareImage(v.url, (v.slogan || 'gorsel') + '.jpg')} className="text-green-600 text-sm border px-2 py-1 rounded hover:bg-green-50">Paylaş</button>
             </div>
           </div>
         ))}
@@ -155,6 +153,7 @@ export default function Home() {
           <div className="col-span-full text-center text-gray-500">Görsel bulunamadı.</div>
         )}
       </div>
+      <Toast message={toast} onClose={() => setToast('')} />
     </main>
   )
 }
